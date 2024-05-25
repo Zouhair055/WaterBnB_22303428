@@ -1,0 +1,171 @@
+/*********
+	  Based on Rui Santos work : https://randomnerdtutorials.com/esp32-mqtt-publish-subscribe-arduino-ide/
+	  File mqtt_full/mqtt_full.ino
+	  Modified by GM
+
+    Test with CLI :
+    mosquitto_pub  -h test.mosquitto.org -t "uca/M1/iot/led" -m on -q 1
+*********/
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Wire.h>
+#include "wifi_utils.h"
+#include "OneWire.h"
+#include "DallasTemperature.h"
+
+/*============= GPIO ==============*/
+const int ledPin = 19; // LED Pin
+/* ---- TEMP ---- */
+OneWire oneWire(23); // Pour utiliser une entite oneWire sur le port 23
+DallasTemperature tempSensor(&oneWire) ; // Cette entite est utilisee par le capteur de temperature
+float temperature = 0;
+float light = 0;
+
+#define MQTT_HOST IPAddress(192, 168, 1, XXX)
+
+/*===== MQTT broker/server ========*/
+//const char* mqtt_server = "192.168.1.101"; 
+//const char* mqtt_server = "public.cloud.shiftr.io"; // Failed in 2021
+// need login and passwd (public,public) mqtt://public:public@public.cloud.shiftr.io
+//const char* mqtt_server = "broker.hivemq.com"; // anynomous Ok in 2021 
+const char* mqtt_server = "test.mosquitto.org"; // anynomous Ok in 2021
+//const char* mqtt_server = "mqtt.eclipseprojects.io"; // anynomous Ok in 2021
+/*===== MQTT TOPICS ===============*/
+#define TOPIC_TEMP "uca/M1/iot/temp"
+#define TOPIC_LED  "uca/M1/iot/led"
+/*===== ESP is a MQTT Client =======*/
+WiFiClient espClient;           // Wifi 
+PubSubClient client(espClient); // MQTT client
+String hostname = "Mon petit objet ESP32";
+
+#define USE_SERIAL Serial
+
+/*===== Arduino IDE paradigm : setup+loop =====*/
+void setup() {
+  // Serial port
+  Serial.begin(9600);
+  while (!Serial); // wait for a serial connection. Needed for native USB port only   
+  
+  // GPIOs configuration
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);// Set outputs to LOW
+  // Init temperature sensor 
+  tempSensor.begin();
+
+  // Wifi connection
+  wifi_connect_multi(hostname);   
+  wifi_printstatus(0);
+  
+  // set server of our MQTT client
+  client.setServer(mqtt_server, 1883);
+  // set callback when publishes arrive for the subscribed topic
+  client.setCallback(mqtt_pubcallback); 
+}
+
+/*============= TO COMPLETE ? ===================*/
+void set_LED(int v){
+  
+}
+
+float get_Temperature(){
+  return 22.5;
+}
+
+/*============== CALLBACK ===================*/
+void mqtt_pubcallback(char* topic, 
+                      byte* message, 
+                      unsigned int length) {
+  /* 
+   * Callback when a message is published on a subscribed topic.
+   */
+  USE_SERIAL.print("Message arrived on topic : ");
+  USE_SERIAL.println(topic);
+  USE_SERIAL.print("=> ");
+
+  // Byte list (of the message) to String and print to Serial
+  String messageTemp;
+  for (int i = 0; i < length; i++) {
+    //USE_SERIAL.print((char)message[i]);
+    messageTemp += (char)message[i];
+  }
+  USE_SERIAL.println(messageTemp);
+
+  // Feel free to add more if statements to control more GPIOs with MQTT
+
+  // If a message is received on the topic,
+  // you check if the message is either "on" or "off".
+  // Changes the output state according to the message
+  if (String(topic) == TOPIC_LED) {
+    USE_SERIAL.print("so ... changing output to ");
+    if (messageTemp == "on") {
+      USE_SERIAL.println("on");
+      set_LED(HIGH);
+    }
+    else if (messageTemp == "off") {
+      USE_SERIAL.println("off");
+      set_LED(LOW);
+    }
+  }
+}
+
+/*============= SUBSCRIBE to TOPICS ===================*/
+
+void mqtt_subscribe_mytopics() {
+  /*
+   * Subscribe to MQTT topics 
+   * There is no way on checking the subscriptions from a client. 
+   * But you can also subscribe WHENEVER you connect. 
+   * Then it is guaranteed that all subscriptions are existing.
+   * => If the client is already connected then we have already subscribe
+   * since connection and subscriptions go together 
+   */
+    // Checks whether the client is connected to the MQTT server
+    while (!client.connected()) { // Loop until we're reconnected
+      USE_SERIAL.print("Attempting MQTT connection...");
+    
+      // Attempt to connect => https://pubsubclient.knolleary.net/api
+    
+      // Create a client ID from MAC address .. should be unique for broker !
+      String clientId = "ESP32-";
+      clientId += WiFi.macAddress(); // if we need random : String(random(0xffff), HEX);
+      if (client.connect(clientId.c_str(), /* Client Id when connecting to the server */
+			 NULL,    /* No credential */ 
+			 NULL)) {
+	        USE_SERIAL.println("connected");
+	        
+	        // then Subscribe topics
+	        client.subscribe(TOPIC_LED,1);
+          // client.subscribe(anothertopic ?);
+       } 
+      else { // Connection to broker failed : retry !
+	        USE_SERIAL.print("failed, rc=");
+	        USE_SERIAL.print(client.state());
+	        USE_SERIAL.println(" try again in 5 seconds");
+	        delay(5000); // Wait 5 seconds before retrying
+       }
+    } // end while
+}
+
+/*================= LOOP ======================*/
+void loop() { /*--- Publish Temperature periodically   */
+  int32_t period = 5000; // 5 sec
+  
+  /*--- subscribe to TOPIC_LED if not yet ! */
+  mqtt_subscribe_mytopics();
+
+  /*--- make payload   */
+  delay(period);
+  temperature = get_Temperature();
+  // Convert the value to a char array
+  char payload[100];
+  sprintf(payload,"{\"temperature\" : \"%.2f\"}",temperature);
+  // Serial info
+  USE_SERIAL.print("Publish payload : "); USE_SERIAL.print(payload); 
+  USE_SERIAL.print(" on topic : "); USE_SERIAL.println(TOPIC_TEMP);
+  
+  /*--- Publish payload on TOPIC_TEMP  */
+  client.publish(TOPIC_TEMP, payload);
+
+  /* Process MQTT ... une fois par loop() ! */
+  client.loop(); // Process MQTT event/action
+}
