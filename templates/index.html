@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pool Access</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .pool-info {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .status-available {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .status-occupied {
+            background-color: #FF9800;
+            color: #fff;
+        }
+
+        .status-hotspot {
+            background-color: #E53935;
+            color: #fff;
+        }
+
+        body::before {
+            content: 'MIAGE';
+            position: fixed;
+            top: 85%;
+            left: 90%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 9999;
+            animation: colorChange 3s infinite alternate;
+        }
+
+        @keyframes colorChange {
+            20% {
+                color: rgba(255, 255, 255, 0.5);
+            }
+            100% {
+                color: #673ab7; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Pool Access</h1>
+    <p>{{ message }}</p>
+
+    {% if temperature is not none and occuped is not none and hotspot is not none %}
+    <div class="pool-info">
+        <h2>Pool Information</h2>
+        <table>
+            <tr>
+                <th>Temperature</th>
+                <th>Occupancy</th>
+                <th>Hotspot</th>
+                <th>Location</th> <!-- Nouvelle colonne -->
+            </tr>
+            <tr>
+                <td>{{ temperature }}°C</td>
+                <td>
+                    <span class="status {% if occuped %}status-occupied{% else %}status-available{% endif %}">
+                        {% if occuped %}Occupied{% else %}Available{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span class="status {% if hotspot %}status-hotspot{% else %}status-available{% endif %}">
+                        {% if hotspot %}Hotspot{% else %}Available{% endif %}
+                    </span>
+                </td>
+                <td>{{ location }}</td> <!-- Nouvelle colonne -->
+            </tr>
+        </table>
+
+        {% if occuped %}
+        <p>The pool is currently occupied. Please wait for it to become available.</p>
+        {% elif hotspot %}
+        <p>The pool is currently a hotspot. Please avoid using it.</p>
+        {% else %}
+        <p>The pool is currently available for use.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</body>
+</html>
