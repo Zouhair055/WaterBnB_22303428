@@ -7,6 +7,11 @@
 4. [Configuration](#Configuration)
 5. [Team Members](#team-members)
 
+# LINKS
+https://github.com/Zouhair055/WaterBnB_22303428
+https://waterbnb-22303428.onrender.com
+https://charts.mongodb.com/charts-iot-kfcpuqu/public/dashboards/66534d64-4ae7-4514-88b6-12caaadfd11d
+
 ## Introduction
 Ce projet développe un système de régulation de piscine intelligente utilisant MongoDB, MongoDB Charts, ESP et Node-RED. Il permet de surveiller et de gérer les paramètres de la piscine tels que la température, l'occupation et les hotspots, tout en gardant une trace des utilisateurs connectés.
 1. Clone the repository:
