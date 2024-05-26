@@ -101,7 +101,10 @@
                 <th>Temperature</th>
                 <th>Occupancy</th>
                 <th>Hotspot</th>
-                <th>Location</th> <!-- Nouvelle colonne -->
+                <th>Location</th>
+                <th>Net</th>
+                <th>Regulation</th>
+                <th>Report Host</th>
             </tr>
             <tr>
                 <td>{{ temperature }}°C</td>
@@ -115,7 +118,10 @@
                         {% if hotspot %}Hotspot{% else %}Available{% endif %}
                     </span>
                 </td>
-                <td>{{ location }}</td> <!-- Nouvelle colonne -->
+                <td>{{ location }}</td>
+                <td>{{ net }}</td>
+                <td>{{ regul }}</td>
+                <td>{{ reporthost }}</td>
             </tr>
         </table>
 

@@ -85,7 +85,7 @@ def check_access():
     temperature = pool_json["status"]["temperature"]
     occuped = pool_json["piscine"]["occuped"]
     hotspot = pool_json["piscine"]["hotspot"]
-    location = pool_json["location"]  # Ajouter la localisation
+    location = pool_json["location"]
 
     # Enregistrer l'accès dans la collection access_logs
     access_logs_collection.insert_one({
